@@ -20,7 +20,7 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -228,7 +228,7 @@ func (m *manager) UpdatePodStatus(podUID types.UID, podStatus *v1.PodStatus) {
 	// succeeded.
 	for i, c := range podStatus.InitContainerStatuses {
 		var ready bool
-		if c.State.Terminated != nil && c.State.Terminated.ExitCode == 0 {
+		if c.State.Running != nil || (c.State.Terminated != nil && c.State.Terminated.ExitCode == 0) {
 			ready = true
 		}
 		podStatus.InitContainerStatuses[i].Ready = ready

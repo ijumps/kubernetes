@@ -32,7 +32,7 @@ import (
 	"strings"
 	"sync"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -1232,7 +1232,7 @@ func getPhase(spec *v1.PodSpec, info []v1.ContainerStatus) v1.PodPhase {
 
 		switch {
 		case containerStatus.State.Running != nil:
-			pendingInitialization++
+			initialized++
 		case containerStatus.State.Terminated != nil:
 			if containerStatus.State.Terminated.ExitCode == 0 {
 				initialized++
@@ -1413,6 +1413,20 @@ func (kl *Kubelet) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kubecontaine
 		len(pod.Spec.InitContainers) > 0,
 		true,
 	)
+
+	// Give a chance for mock init container to completed
+	for i, v := range apiPodStatus.InitContainerStatuses {
+		if v.State.Running != nil {
+			apiPodStatus.InitContainerStatuses[i].State.Terminated = &v1.ContainerStateTerminated{
+				ContainerID: "docker://fake_id",
+				ExitCode:    0,
+				FinishedAt:  v.State.Running.StartedAt,
+				Reason:      "Completed",
+				StartedAt:   v.State.Running.StartedAt,
+			}
+			apiPodStatus.InitContainerStatuses[i].State.Running = nil
+		}
+	}
 
 	// Preserves conditions not controlled by kubelet
 	for _, c := range pod.Status.Conditions {

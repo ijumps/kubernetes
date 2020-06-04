@@ -718,14 +718,14 @@ func findNextInitContainerToRun(pod *v1.Pod, podStatus *kubecontainer.PodStatus)
 		status := podStatus.FindContainerStatusByName(container.Name)
 		if status == nil {
 			continue
-		}
+ 		}
 
-		// container is still running, return not done.
-		if status.State == kubecontainer.ContainerStateRunning {
-			return nil, nil, false
-		}
+		// // container is still running, return not done.
+		// if status.State == kubecontainer.ContainerStateRunning {
+		// 	return nil, nil, false
+		// }
 
-		if status.State == kubecontainer.ContainerStateExited {
+		if status.State == kubecontainer.ContainerStateExited || status.State == kubecontainer.ContainerStateRunning {
 			// all init containers successful
 			if i == (len(pod.Spec.InitContainers) - 1) {
 				return nil, nil, true
